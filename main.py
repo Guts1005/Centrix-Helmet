@@ -177,7 +177,7 @@ class MainWindow(QMainWindow):
         self.capture_btn.setEnabled(False)
         threading.Thread(target=self.capture_image_worker, daemon=True).start()
 
-    def capture_image_worker(self):
+def capture_image_worker(self):
     msg = ""
     try:
         speak("Capturing image")
