@@ -178,25 +178,35 @@ class MainWindow(QMainWindow):
         threading.Thread(target=self.capture_image_worker, daemon=True).start()
 
     def capture_image_worker(self):
-        msg = ""
-        try:
-            speak("Capturing image")
-            category = self.type_dropdown.currentText().lower()
-            capture_time = datetime.datetime.now().strftime("%H:%M:%S")
-            image_path = self.camera.capture_image(category)
-            success, resp = upload_image(image_path, capture_time, capture_time)
-            if success:
-                os.remove(image_path)
-                msg = f"Image captured & uploaded: {image_path}"
-                speak("Image captured")
-            else:
-                msg = f"Image captured but upload failed: {resp}"
-                speak("Image upload failed")
-        except Exception as e:
-            msg = f"Image capture error: {e}"
-            speak("Image capture failed")
-        finally:
-            self.imageCaptured.emit(msg)
+    msg = ""
+    try:
+        speak("Capturing image")
+        category = self.type_dropdown.currentText().lower()
+        print("Selected category:", category)
+
+        capture_time = datetime.datetime.now().strftime("%H:%M:%S")
+        print("Capture time:", capture_time)
+
+        image_path = self.camera.capture_image(category)
+        print("Image saved at:", image_path)
+
+        success, resp = upload_image(image_path, capture_time, capture_time)
+        print("Upload response:", success, resp)
+
+        if success:
+            os.remove(image_path)
+            msg = f"Image captured & uploaded: {image_path}"
+            speak("Image captured")
+        else:
+            msg = f"Image captured but upload failed: {resp}"
+            speak("Image upload failed")
+    except Exception as e:
+        msg = f"Image capture error: {e}"
+        print("[ERROR] Image capture error:", e)
+        speak("Image capture failed")
+    finally:
+        self.imageCaptured.emit(msg)
+
 
     @pyqtSlot(str)
     def finish_capture(self, msg):
