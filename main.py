@@ -200,13 +200,14 @@ class MainWindow(QMainWindow):
         else:
             msg = f"Image captured but upload failed: {resp}"
             speak("Image upload failed")
+
     except Exception as e:
         msg = f"Image capture error: {e}"
         print("[ERROR] Image capture error:", e)
         speak("Image capture failed")
+
     finally:
         self.imageCaptured.emit(msg)
-
 
     @pyqtSlot(str)
     def finish_capture(self, msg):
