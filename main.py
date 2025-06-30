@@ -209,7 +209,7 @@ class MainWindow(QMainWindow):
             self.audio_recording = True
             self.audio_btn.setText("Stop Audio")
             self.status_label.setText("Audio recording started...")
-            speak("Audio recording started")
+            speak("Audio Started")
         else:
             category = self.type_dropdown.currentText().lower()
             audio_file, start_time, end_time = self.audio_recorder.stop_recording(category)
@@ -221,7 +221,7 @@ class MainWindow(QMainWindow):
                 self.status_label.setText(f"Audio recorded & uploaded: {audio_file}")
             else:
                 self.status_label.setText(f"Audio recorded but upload failed: {resp}")
-            speak("Audio recording stopped")
+            speak("Audio Stopped")
 
     def toggle_video_recording(self):
         record_audio_with_video = self.record_audio_checkbox.isChecked()
@@ -232,7 +232,7 @@ class MainWindow(QMainWindow):
             self.video_recording = True
             self.video_btn.setText("Stop Video")
             self.status_label.setText("Video recording started...")
-            speak("Video recording started")
+            speak("Video Started")
         else:
             segments = self.video_recorder.stop_recording(category)
             self.video_recording = False
@@ -252,7 +252,7 @@ class MainWindow(QMainWindow):
                 self.status_label.setText("Video segments recorded: " + ", ".join(msg_list))
             else:
                 self.status_label.setText("No video segments recorded.")
-            speak("Video recording stopped")
+            speak("Video Stopped")
 
     def close_session(self):
         self.camera.stop_preview()
