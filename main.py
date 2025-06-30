@@ -74,140 +74,45 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Construction Site Helmet - Preview")
-        self.showFullScreen()
-
+        ...
         self.imageCaptured.connect(self.finish_capture)
-
-        self.camera = Camera()
-        self.preview_widget = self.camera.start_preview()
-
-        self.audio_recorder = AudioRecorder()
-        self.video_recorder = VideoRecorder(self.camera, self.audio_recorder)
-        self.audio_recording = False
-        self.video_recording = False
-
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        main_layout = QVBoxLayout(central_widget)
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(0)
-
-        main_layout.addWidget(self.preview_widget, stretch=1)
-
-        bottom_layout = QHBoxLayout()
-        bottom_layout.setSpacing(10)
-
-        self.type_dropdown = QComboBox()
-        categories = ["General", "Electrical", "Plumbing", "HVAC", "Patrician", 
-                      "Loose furniture", "Light fixtures", "Flooring", "Ceiling", "Painting"]
-        self.type_dropdown.addItems(categories)
-        bottom_layout.addWidget(self.type_dropdown)
-
-        self.video_btn = QPushButton("Start Video")
-        self.video_btn.setFixedSize(150, 40)
-        self.video_btn.clicked.connect(self.toggle_video_recording)
-        bottom_layout.addWidget(self.video_btn)
-
-        self.record_audio_checkbox = QCheckBox("Record Audio with Video")
-        self.record_audio_checkbox.setChecked(True)
-        bottom_layout.addWidget(self.record_audio_checkbox)
-
-        self.capture_btn = QPushButton("Capture Image")
-        self.capture_btn.setFixedSize(150, 40)
-        self.capture_btn.clicked.connect(self.handle_capture_image)
-        bottom_layout.addWidget(self.capture_btn)
-
-        self.audio_btn = QPushButton("Start Audio")
-        self.audio_btn.setFixedSize(150, 40)
-        self.audio_btn.clicked.connect(self.toggle_audio_recording)
-        bottom_layout.addWidget(self.audio_btn)
-
-        self.advanced_btn = QPushButton("Advanced Options")
-        self.advanced_btn.setFixedSize(150, 40)
-        self.advanced_btn.clicked.connect(self.open_advanced_options)
-        bottom_layout.addWidget(self.advanced_btn)
-
-        bottom_layout.addStretch()
-
-        self.close_btn = QPushButton("Close Session")
-        self.close_btn.setFixedSize(150, 40)
-        self.close_btn.clicked.connect(self.close_session)
-        bottom_layout.addWidget(self.close_btn)
-
-        main_layout.addLayout(bottom_layout)
-
-        self.status_label = QLabel("Ready")
-        self.status_label.setAlignment(Qt.AlignCenter)
-        self.status_label.setStyleSheet("background-color: #EFEFEF; padding: 5px;")
-        main_layout.addWidget(self.status_label)
-
-        self.gpio_handler = GPIOHandler(self)
-        self.attempt_reupload_failed_files()
-
-    def open_advanced_options(self):
-        dialog = AdvancedOptionsDialog(self.camera, self)
-        dialog.exec_()
-
-    def attempt_reupload_failed_files(self):
-        failed_dirs = {
-            "image": FAILED_IMAGES_DIR,
-            "audio": FAILED_AUDIOS_DIR,
-            "video": FAILED_VIDEOS_DIR,
-        }
-        for file_type, failed_dir in failed_dirs.items():
-            if not os.path.exists(failed_dir):
-                continue
-            for file_name in os.listdir(failed_dir):
-                file_path = os.path.join(failed_dir, file_name)
-                print(f"Attempting re-upload of {file_path}")
-                if file_type == "image":
-                    success, resp = upload_image(file_path, "", "")
-                elif file_type == "audio":
-                    success, resp = upload_audio(file_path, "", "")
-                elif file_type == "video":
-                    success, resp = upload_video(file_path, "", "")
-                if success:
-                    os.remove(file_path)
-                    print(f"Successfully re-uploaded and deleted {file_path}")
-                else:
-                    print(f"Failed again to upload {file_path}: {resp}")
+        ...
 
     def handle_capture_image(self):
         self.capture_btn.setEnabled(False)
         threading.Thread(target=self.capture_image_worker, daemon=True).start()
 
-def capture_image_worker(self):
-    msg = ""
-    try:
-        speak("Capturing image")
-        category = self.type_dropdown.currentText().lower()
-        print("Selected category:", category)
+    def capture_image_worker(self):
+        msg = ""
+        try:
+            speak("Capturing image")
+            category = self.type_dropdown.currentText().lower()
+            print("Selected category:", category)
 
-        capture_time = datetime.datetime.now().strftime("%H:%M:%S")
-        print("Capture time:", capture_time)
+            capture_time = datetime.datetime.now().strftime("%H:%M:%S")
+            print("Capture time:", capture_time)
 
-        image_path = self.camera.capture_image(category)
-        print("Image saved at:", image_path)
+            image_path = self.camera.capture_image(category)
+            print("Image saved at:", image_path)
 
-        success, resp = upload_image(image_path, capture_time, capture_time)
-        print("Upload response:", success, resp)
+            success, resp = upload_image(image_path, capture_time, capture_time)
+            print("Upload response:", success, resp)
 
-        if success:
-            os.remove(image_path)
-            msg = f"Image captured & uploaded: {image_path}"
-            speak("Image captured")
-        else:
-            msg = f"Image captured but upload failed: {resp}"
-            speak("Image upload failed")
+            if success:
+                os.remove(image_path)
+                msg = f"Image captured & uploaded: {image_path}"
+                speak("Image captured")
+            else:
+                msg = f"Image captured but upload failed: {resp}"
+                speak("Image upload failed")
 
-    except Exception as e:
-        msg = f"Image capture error: {e}"
-        print("[ERROR] Image capture error:", e)
-        speak("Image capture failed")
+        except Exception as e:
+            msg = f"Image capture error: {e}"
+            print("[ERROR] Image capture error:", e)
+            speak("Image capture failed")
 
-    finally:
-        self.imageCaptured.emit(msg)
+        finally:
+            self.imageCaptured.emit(msg)
 
     @pyqtSlot(str)
     def finish_capture(self, msg):
