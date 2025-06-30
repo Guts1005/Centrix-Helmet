@@ -55,10 +55,10 @@ def upload_file(file_path, file_type, start_time="", end_time=""):
         return False, {"exception": str(e)}
 
 def upload_image(file_path, start_time="", end_time=""):
-    return upload_file(file_path, "video", start_time, end_time)
+    return upload_file(file_path, "image", start_time, end_time)
 
 def upload_video(file_path, start_time="", end_time=""):
     return upload_file(file_path, "video", start_time, end_time)
 
 def upload_audio(file_path, start_time="", end_time=""):
-    return upload_file(file_path, "video", start_time, end_time)
+    return upload_file(file_path, "audio", start_time, end_time)
