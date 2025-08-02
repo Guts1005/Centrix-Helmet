@@ -14,7 +14,7 @@ from camera import Camera
 from recorder import AudioRecorder, VideoRecorder
 from uploader import upload_image, upload_audio, upload_video
 from gpio_handler import GPIOHandler
-from utils import FAILED_IMAGES_DIR, FAILED_VIDEOS_DIR, FAILED_AUDIOS_DIR, speak  # <- speak added
+from utils import FAILED_IMAGES_DIR, FAILED_VIDEOS_DIR, FAILED_AUDIOS_DIR
 
 class AdvancedOptionsDialog(QDialog):
     def __init__(self, camera, parent=None):
@@ -26,6 +26,7 @@ class AdvancedOptionsDialog(QDialog):
     def init_ui(self):
         layout = QVBoxLayout(self)
 
+        # Brightness slider
         self.brightness_label = QLabel("Brightness:")
         self.brightness_slider = QSlider(Qt.Horizontal)
         self.brightness_slider.setRange(0, 100)
@@ -34,6 +35,7 @@ class AdvancedOptionsDialog(QDialog):
         layout.addWidget(self.brightness_label)
         layout.addWidget(self.brightness_slider)
 
+        # Sharpness slider
         self.sharpness_label = QLabel("Sharpness:")
         self.sharpness_slider = QSlider(Qt.Horizontal)
         self.sharpness_slider.setRange(0, 100)
@@ -42,6 +44,7 @@ class AdvancedOptionsDialog(QDialog):
         layout.addWidget(self.sharpness_label)
         layout.addWidget(self.sharpness_slider)
 
+        # Contrast slider
         self.contrast_label = QLabel("Contrast:")
         self.contrast_slider = QSlider(Qt.Horizontal)
         self.contrast_slider.setRange(0, 100)
@@ -50,6 +53,7 @@ class AdvancedOptionsDialog(QDialog):
         layout.addWidget(self.contrast_label)
         layout.addWidget(self.contrast_slider)
 
+        # Saturation slider
         self.saturation_label = QLabel("Saturation:")
         self.saturation_slider = QSlider(Qt.Horizontal)
         self.saturation_slider.setRange(0, 100)
@@ -58,12 +62,14 @@ class AdvancedOptionsDialog(QDialog):
         layout.addWidget(self.saturation_label)
         layout.addWidget(self.saturation_slider)
 
+        # Dialog buttons: OK and Cancel
         self.button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         self.button_box.accepted.connect(self.accept)
         self.button_box.rejected.connect(self.reject)
         layout.addWidget(self.button_box)
 
     def update_camera_controls(self):
+        # Only brightness is currently supported.
         brightness = self.brightness_slider.value()
         controls = {"Brightness": brightness}
         self.camera.update_controls(controls)
@@ -79,14 +85,17 @@ class MainWindow(QMainWindow):
 
         self.imageCaptured.connect(self.finish_capture)
 
+        # Initialize camera.
         self.camera = Camera()
         self.preview_widget = self.camera.start_preview()
 
+        # Initialize recorders.
         self.audio_recorder = AudioRecorder()
         self.video_recorder = VideoRecorder(self.camera, self.audio_recorder)
         self.audio_recording = False
         self.video_recording = False
 
+        # Set up layout.
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QVBoxLayout(central_widget)
@@ -95,34 +104,41 @@ class MainWindow(QMainWindow):
 
         main_layout.addWidget(self.preview_widget, stretch=1)
 
+        # Bottom controls.
         bottom_layout = QHBoxLayout()
         bottom_layout.setSpacing(10)
 
+        # Dropdown for media category.
         self.type_dropdown = QComboBox()
         categories = ["General", "Electrical", "Plumbing", "HVAC", "Patrician", 
                       "Loose furniture", "Light fixtures", "Flooring", "Ceiling", "Painting"]
         self.type_dropdown.addItems(categories)
         bottom_layout.addWidget(self.type_dropdown)
 
+        # Video toggle button.
         self.video_btn = QPushButton("Start Video")
         self.video_btn.setFixedSize(150, 40)
         self.video_btn.clicked.connect(self.toggle_video_recording)
         bottom_layout.addWidget(self.video_btn)
 
+        # Checkbox for recording audio with video.
         self.record_audio_checkbox = QCheckBox("Record Audio with Video")
         self.record_audio_checkbox.setChecked(True)
         bottom_layout.addWidget(self.record_audio_checkbox)
 
+        # Capture Image button.
         self.capture_btn = QPushButton("Capture Image")
         self.capture_btn.setFixedSize(150, 40)
         self.capture_btn.clicked.connect(self.handle_capture_image)
         bottom_layout.addWidget(self.capture_btn)
 
+        # Audio toggle button.
         self.audio_btn = QPushButton("Start Audio")
         self.audio_btn.setFixedSize(150, 40)
         self.audio_btn.clicked.connect(self.toggle_audio_recording)
         bottom_layout.addWidget(self.audio_btn)
 
+        # Advanced Options button.
         self.advanced_btn = QPushButton("Advanced Options")
         self.advanced_btn.setFixedSize(150, 40)
         self.advanced_btn.clicked.connect(self.open_advanced_options)
@@ -130,6 +146,7 @@ class MainWindow(QMainWindow):
 
         bottom_layout.addStretch()
 
+        # Close Session button.
         self.close_btn = QPushButton("Close Session")
         self.close_btn.setFixedSize(150, 40)
         self.close_btn.clicked.connect(self.close_session)
@@ -142,7 +159,10 @@ class MainWindow(QMainWindow):
         self.status_label.setStyleSheet("background-color: #EFEFEF; padding: 5px;")
         main_layout.addWidget(self.status_label)
 
+        # Initialize GPIO handler.
         self.gpio_handler = GPIOHandler(self)
+
+        # Attempt to re-upload any previously failed files on startup.
         self.attempt_reupload_failed_files()
 
     def open_advanced_options(self):
@@ -180,21 +200,18 @@ class MainWindow(QMainWindow):
     def capture_image_worker(self):
         msg = ""
         try:
-            speak("Capturing image")
             category = self.type_dropdown.currentText().lower()
+            # Record the capture time (using the same value for both start and end)
             capture_time = datetime.datetime.now().strftime("%H:%M:%S")
             image_path = self.camera.capture_image(category)
             success, resp = upload_image(image_path, capture_time, capture_time)
             if success:
                 os.remove(image_path)
                 msg = f"Image captured & uploaded: {image_path}"
-                speak("Image captured")
             else:
                 msg = f"Image captured but upload failed: {resp}"
-                speak("Image upload failed")
         except Exception as e:
             msg = f"Image capture error: {e}"
-            speak("Image capture failed")
         finally:
             self.imageCaptured.emit(msg)
 
@@ -209,7 +226,6 @@ class MainWindow(QMainWindow):
             self.audio_recording = True
             self.audio_btn.setText("Stop Audio")
             self.status_label.setText("Audio recording started...")
-            speak("Audio Started")
         else:
             category = self.type_dropdown.currentText().lower()
             audio_file, start_time, end_time = self.audio_recorder.stop_recording(category)
@@ -221,7 +237,6 @@ class MainWindow(QMainWindow):
                 self.status_label.setText(f"Audio recorded & uploaded: {audio_file}")
             else:
                 self.status_label.setText(f"Audio recorded but upload failed: {resp}")
-            speak("Audio Stopped")
 
     def toggle_video_recording(self):
         record_audio_with_video = self.record_audio_checkbox.isChecked()
@@ -232,7 +247,6 @@ class MainWindow(QMainWindow):
             self.video_recording = True
             self.video_btn.setText("Stop Video")
             self.status_label.setText("Video recording started...")
-            speak("Video Started")
         else:
             segments = self.video_recorder.stop_recording(category)
             self.video_recording = False
@@ -252,7 +266,6 @@ class MainWindow(QMainWindow):
                 self.status_label.setText("Video segments recorded: " + ", ".join(msg_list))
             else:
                 self.status_label.setText("No video segments recorded.")
-            speak("Video Stopped")
 
     def close_session(self):
         self.camera.stop_preview()

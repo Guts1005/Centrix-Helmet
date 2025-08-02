@@ -1,12 +1,8 @@
-# -*- coding: windows-1252 -*-
 #!/usr/bin/env python3
-
 import os
 import datetime
-import time
 from picamera2 import Picamera2
 from picamera2.previews.qt import QGlPicamera2
-from led_handler import led_status_blink  # ? Correct blink import
 
 class Camera:
     def __init__(self):
@@ -16,31 +12,28 @@ class Camera:
         self.image_counter = 1
         os.makedirs("Images", exist_ok=True)
 
-    def apply_video_transform(self, hflip=False, vflip=False, rotation=0, width=1920, height=1080):
+    def apply_video_transform(self, hflip=False, vflip=False, rotation=0, width=None, height=None):
         """
-        Apply transformation settings for video recording with 1080p resolution.
+        Apply transformation settings for video (and preview).
+        Optionally adjust output dimensions.
         """
-        config = self.picam2.create_video_configuration(main={"size": (width, height)})
+        config = self.picam2.create_preview_configuration()
         config["transform"] = {"hflip": hflip, "vflip": vflip, "rotation": rotation}
+        if width is not None and height is not None:
+            config["size"] = (width, height)
         self.picam2.configure(config)
 
     def start_preview(self):
-        """
-        Start the camera preview using Qt OpenGL widget (1080p preview).
-        """
         if self.preview_started:
             return self.preview_widget
 
         self.preview_widget = QGlPicamera2(self.picam2, keep_ar=True)
-
-        # Use 1080p for preview (better performance for video)
-        config = self.picam2.create_preview_configuration(main={"size": (1920, 1080)})
+        config = self.picam2.create_preview_configuration(sensor={'output_size': (1296, 972)})
         self.picam2.configure(config)
-
         self.picam2.start()
         self.preview_started = True
         return self.preview_widget
-
+		
     def stop_preview(self):
         if self.preview_started:
             self.picam2.stop()
@@ -48,30 +41,31 @@ class Camera:
 
     def capture_image(self, media_category="general"):
         """
-        Capture an image using max resolution (3280x2464).
+        Captures an image and saves it with the naming convention:
+        image_<num>_<date>_<time>_<media_category>.jpg
+        For images, the start and end times are identical.
         """
+        # Replace any spaces in the media_category to ensure a valid filename.
         sanitized_category = media_category.replace(" ", "_").lower()
         now = datetime.datetime.now()
-        date_str = now.strftime("%d%b%Y").lower()
-        time_str = now.strftime("%H%M%S")
+        date_str = now.strftime("%d%b%Y").lower()  # e.g., 12feb2021
+        time_str = now.strftime("%H%M%S")            # e.g., 112012
         filename = os.path.join("Images", f"img_{self.image_counter}_{date_str}_{time_str}_{sanitized_category}.jpg")
-
         try:
-            # Configure camera for max still resolution
-            still_config = self.picam2.create_still_configuration(main={"size": (3280, 2464)})
-            self.picam2.configure(still_config)
-            self.picam2.start()
-            time.sleep(0.2)  # Allow time for camera to warm up
             self.picam2.capture_file(filename)
-
-            led_status_blink()  # ? Blink LED after capture
         except Exception as e:
             raise Exception("Capture failed: " + str(e))
-
         self.image_counter += 1
         return filename
 
     def update_controls(self, controls):
+        """
+        Update camera controls in real-time.
+        The slider values (0–100) are mapped to normalized values (0.0–1.0)
+        where 0.5 is the default (neutral) setting.
+        Example input: {"Brightness": 50, "Sharpness": 50, "Contrast": 50, "Saturation": 50}
+        """
+        # Normalize the values: slider value 50 becomes 0.5
         normalized_controls = {key: value / 100.0 for key, value in controls.items()}
         try:
             self.picam2.set_controls(normalized_controls)

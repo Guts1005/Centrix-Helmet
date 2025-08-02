@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import os
 import datetime
-import subprocess
 
 # Ensure required directories exist.
 IMAGES_DIR = "Images"
@@ -44,11 +43,4 @@ def get_rpi_serial():
     except Exception as e:
         print("Could not read RPi serial number:", e)
     return "unknown_pi"
-
-def speak(text):
-    try:
-        # -s sets the speed (default is 175 WPM); use 130 for slower pace
-        subprocess.run(['espeak', '-s', '130', text], check=True)
-    except Exception as e:
-        print(f"[TTS ERROR] Failed to speak '{text}': {e}")
 
