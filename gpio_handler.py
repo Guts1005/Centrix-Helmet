@@ -13,19 +13,13 @@ class GPIOHandler:
         # GPIO mapping for both RF remote and backup physical buttons
         self.pin_to_action = {
             # RF Remote (YK04)
-            22: self.main_window.toggle_audio_recording,     # RF Button A
-            17: self.main_window.toggle_video_recording,     # RF Button B
-            23: self.main_window.handle_capture_image,       # RF Button C
-            27: self.shutdown_pi,                            # RF Button D
+            17: self.main_window.toggle_video_recording,     # Only RF Button B
 
-            # Backup Physical Buttons (new GPIOs)
-            6:  self.main_window.toggle_audio_recording,     # Backup Button 1 (Pin 31)
-            13: self.main_window.toggle_video_recording,     # Backup Button 2 (Pin 33)
-            12: self.main_window.handle_capture_image        # Backup Button 3 (Pin 32)
+            # Backup Physical Button
+            13: self.main_window.toggle_video_recording      # Only Backup Button 2 (Pin 33)
         }
-
-        self.rf_pins = [22, 17, 23, 27]
-        self.backup_pins = [6, 13, 12]
+        self.rf_pins = [17]       # Only RF Button B
+        self.backup_pins = [13]   # Only Backup Button 2
 
         GPIO.setmode(GPIO.BCM)
 
